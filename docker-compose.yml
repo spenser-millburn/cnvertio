@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    command: uvicorn api:app --host 0.0.0.0 --port 6500
+    volumes:
+      - .:/app
+      - /home/smillburn/Documents/conductor-441120-b2b06a8ce1c6.json:/app/conductor-441120-b2b06a8ce1c6.json
+    environment: 
+    - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "6500:6500"
+
+networks:
+  default:
+    driver: bridge
