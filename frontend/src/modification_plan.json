@@ -1,0 +1,1 @@
+[   {     "App.tsx": "Modify the file so that each button in the application executes a different step. Ensure that no two buttons execute the same step. This may involve adjusting the event handlers or logic associated with each button to achieve this functionality."   } ]

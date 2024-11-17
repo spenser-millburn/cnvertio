@@ -1,1 +1,0 @@
-Hello, World! This is a simple Markdown document to demonstrate the classic "Hello, World!" program. Markdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents. It's widely used for documentation, notes, and writing on platforms like GitHub and Reddit.
