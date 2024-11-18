@@ -9,7 +9,8 @@ import os
 from pydantic import BaseModel
 from datetime import datetime
 
-""" =========================================================================================================
+"""
+=========================================================================================================
                                          Definitions
 ---------------------------------------------------------------------------------------------------------
 - Pipeline: A container for workflow logic
@@ -34,16 +35,14 @@ class Pipeline(BaseModel):
     steps: List[Stage]
 
 class PluginInterface:
-    def __init__(self):
-        self.previous_result = None
-
     def authenticate(self):
         raise NotImplementedError("Authenticate method not implemented.")
 
     def execute(self, action, data):
         raise NotImplementedError("Execute method not implemented.")
 
-""" =========================================================================================================
+"""
+=========================================================================================================
                                              Decorators
 =========================================================================================================
 """
@@ -57,7 +56,8 @@ def validate_action(func):
         return func(self, action, data)
     return wrapper
 
-""" =========================================================================================================
+"""
+=========================================================================================================
                                              Plugins:
 ---------------------------------------------------------------------------------------------------------
 - Google Drive
@@ -67,7 +67,6 @@ def validate_action(func):
 
 class GoogleDrivePlugin(PluginInterface):
     def __init__(self, service_account_file):
-        super().__init__()
         self.service_account_file = service_account_file
         self.creds = None
         self.supported_actions = ["upload_file", "download_file", "list_files"]
@@ -110,26 +109,22 @@ class GoogleDrivePlugin(PluginInterface):
         if action == 'upload_file':
             file_name = data["file_path"]
             file_id = self.upload_file(file_name)
-            artifact.metadata.update({"file_id": file_id, "file_name": file_name, "previous_result": self.previous_result})
-            self.previous_result = artifact
+            artifact.metadata.update({"file_id": file_id, "file_name": file_name})
             return artifact
 
         elif action == 'download_file':
             result = self.download_file(file_id=data["file_id"], destination=data["file_path"])
-            artifact.metadata.update({"result": result, "previous_result": self.previous_result})
-            self.previous_result = artifact
+            artifact.metadata.update({"result": result})
             return artifact
 
         elif action == 'list_files':
             results = service.files().list(pageSize=10, fields="files(id, name)").execute()
             items = results.get('files', [])
-            artifact.metadata.update({"files": items, "previous_result": self.previous_result})
-            self.previous_result = artifact
+            artifact.metadata.update({"files": items})
             return artifact
 
 class GPTTransformPlugin(PluginInterface):
     def __init__(self):
-        super().__init__()
         self.authenticated = False
         self.client = None
         self.supported_actions = ["transform_text", "transform_file"]
@@ -169,14 +164,15 @@ class GPTTransformPlugin(PluginInterface):
 
         if action == 'transform_text':
             content = self.transform_text(data["source"], data["transformation"])
-            artifact.metadata.update({"content": content, "previous_result": data["previous_result"]})
+            artifact.metadata.update({"content": content})
             return artifact
         if action == 'transform_file':
             content = self.transform_text(data["source_path"], data["transformation"])
-            artifact.metadata.update({"content": content, "previous_result": data["previous_result"]})
+            artifact.metadata.update({"content": content})
             return artifact
 
-""" =========================================================================================================$
+"""
+=========================================================================================================$
                                  Engine: Pipeline Implementaiton
 =========================================================================================================
 """
@@ -190,15 +186,11 @@ class PipelineEngine:
 
     def execute_pipeline(self, pipeline):
         results = []
-        previous_result = None
         for step in pipeline:
             plugin_name = step.plugin
             action = step.action
             data = step.data
 
-            # If there is a previous result, pass it to the current stage
-            if previous_result is not None:
-                data['previous_result'] = previous_result
 
             plugin = self.plugins.get(plugin_name)
 
@@ -208,8 +200,5 @@ class PipelineEngine:
             plugin.authenticate()
             result = plugin.execute(action, data)
             results.append(result)
-
-            # Store the result for the next stage
-            previous_result = result
 
         return results
