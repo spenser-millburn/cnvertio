@@ -35,6 +35,9 @@ class Pipeline(BaseModel):
     steps: List[Stage]
 
 class PluginInterface:
+    def __init__(self):
+        self.previous_result = None
+
     def authenticate(self):
         raise NotImplementedError("Authenticate method not implemented.")
 
@@ -67,6 +70,7 @@ def validate_action(func):
 
 class GoogleDrivePlugin(PluginInterface):
     def __init__(self, service_account_file):
+        super().__init__()
         self.service_account_file = service_account_file
         self.creds = None
         self.supported_actions = ["upload_file", "download_file", "list_files"]
@@ -109,22 +113,26 @@ class GoogleDrivePlugin(PluginInterface):
         if action == 'upload_file':
             file_name = data["file_path"]
             file_id = self.upload_file(file_name)
-            artifact.metadata = {"file_id": file_id, "file_name": file_name}
+            artifact.metadata = {"file_id": file_id, "file_name": file_name, "previous_result": self.previous_result}
+            self.previous_result = artifact
             return artifact
 
         elif action == 'download_file':
             result = self.download_file(file_id=data["file_id"], destination=data["file_path"])
-            artifact.metadata = {"result": result}
+            artifact.metadata = {"result": result, "previous_result": self.previous_result}
+            self.previous_result = artifact
             return artifact
 
         elif action == 'list_files':
             results = service.files().list(pageSize=10, fields="files(id, name)").execute()
             items = results.get('files', [])
-            artifact.metadata = {"files": items}
+            artifact.metadata = {"files": items, "previous_result": self.previous_result}
+            self.previous_result = artifact
             return artifact
 
 class GPTTransformPlugin(PluginInterface):
     def __init__(self):
+        super().__init__()
         self.authenticated = False
         self.client = None
         self.supported_actions = ["transform_text", "transform_file"]
@@ -164,17 +172,16 @@ class GPTTransformPlugin(PluginInterface):
 
         if action == 'transform_text':
             content = self.transform_text(data["source"], data["transformation"])
-            artifact.metadata = {"content": content, "previous_result": data.get("previous_result")}
+            artifact.metadata = {"content": content, "previous_result": data["previous_result"] }
             return artifact
-
         if action == 'transform_file':
-            content = self.transform_file(data["source_path"], data["transformation"])
-            artifact.metadata = {"content": content, "previous_result": data.get("previous_result")}
+            content = self.transform_text(data["source_path"],data["transformation"]) 
+            artifact.metadata = {"content": content, "previous_result" : data["previous_result"] }
             return artifact
 
 """
 =========================================================================================================$
-                                Engine: Pipeline Implementation
+                                Engine: Pipeline Implementaiton
 =========================================================================================================
 """
 
@@ -210,3 +217,5 @@ class PipelineEngine:
             previous_result = result
 
         return results
+
+
