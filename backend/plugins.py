@@ -191,7 +191,6 @@ class PipelineEngine:
                 InputValidator.validate(step, results[-1])
 
             result = plugin.execute(action=action, data=data, previous_result=results[-1] if results else None)
-k
             results.append(result)
 
         return results
