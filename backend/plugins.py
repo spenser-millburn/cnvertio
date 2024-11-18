@@ -7,18 +7,24 @@ import openai
 import os
 
 from pydantic import BaseModel
+from datetime import datetime
 
 """
 =========================================================================================================
                                         Definitions
 ---------------------------------------------------------------------------------------------------------
-
 - Pipeline: A container for workflow logic
 - Stage: A discrete unit of work
-- Plugin: 
+- Plugin:
 =========================================================================================================
 """
 
+class Artifact(BaseModel):
+    plugin: str
+    data_type: str
+    status: str
+    timestamp: datetime
+    metadata: dict
 
 class Stage(BaseModel):
     plugin: str
@@ -41,7 +47,6 @@ class PluginInterface:
 =========================================================================================================
 """
 
-
 def validate_action(func):
     def wrapper(self, action, data=None):
         if not action:
@@ -57,7 +62,6 @@ def validate_action(func):
 ---------------------------------------------------------------------------------------------------------
 - Google Drive
 - GPTTransform
-
 =========================================================================================================
 """
 
@@ -92,22 +96,32 @@ class GoogleDrivePlugin(PluginInterface):
         return f"File downloaded to: {destination}"
 
     @validate_action
-    def execute(self, action, data=None ):
+    def execute(self, action, data=None):
         service = build('drive', 'v3', credentials=self.creds)
+        artifact = Artifact(
+            plugin="GoogleDrivePlugin",
+            data_type="file",
+            status="success",
+            timestamp=datetime.now(),
+            metadata={}
+        )
 
         if action == 'upload_file':
             file_name = data["file_path"]
             file_id = self.upload_file(file_name)
-            return f"File uploaded with ID: {file_id}, Name: {file_name}"
+            artifact.metadata = {"file_id": file_id, "file_name": file_name}
+            return artifact
 
         elif action == 'download_file':
-            return self.download_file(file_id=data["file_id"], destination=data["file_path"])
+            result = self.download_file(file_id=data["file_id"], destination=data["file_path"])
+            artifact.metadata = {"result": result}
+            return artifact
 
         elif action == 'list_files':
             results = service.files().list(pageSize=10, fields="files(id, name)").execute()
             items = results.get('files', [])
-            return items
-
+            artifact.metadata = {"files": items}
+            return artifact
 
 class GPTTransformPlugin(PluginInterface):
     def __init__(self):
@@ -117,42 +131,50 @@ class GPTTransformPlugin(PluginInterface):
 
     def authenticate(self):
         if not self.authenticated:
-            self.client = openai.OpenAI() #TODO add handling here
+            self.client = openai.OpenAI()  # TODO add handling here
             self.authenticated = True
 
-    def transform_text(self,source_text, transformation):
-
-
+    def transform_text(self, source_text, transformation):
         response = self.client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
-                {"role": "system", "content":""},
+                {"role": "system", "content": ""},
                 {"role": "user", "content": f"{source_text}, {transformation}"},
             ]
         )
         transformed_text = response.choices[0].message.content
         return transformed_text
 
-    def transform_file(self,source_file_path, transformation):
-        with open(source_file_path, "r+") as file: 
-            source_text  = file.read()
+    def transform_file(self, source_file_path, transformation):
+        with open(source_file_path, "r+") as file:
+            source_text = file.read()
             transformed_text = self.transform_text(source_text, transformation)
             file.write(transformed_text)
-        return transformed_text + "succesfully modified file"
-
+        return transformed_text + " successfully modified file"
 
     @validate_action
     def execute(self, action, data):
+        artifact = Artifact(
+            plugin="GPTTransformPlugin",
+            data_type="text",
+            status="success",
+            timestamp=datetime.now(),
+            metadata={}
+        )
+
         if action == 'transform_text':
-            content = self.transform_text(data["source"],data["transformation"]) 
-            return {"content": content, "previous_result" : data["previous_result"] }
+            content = self.transform_text(data["source"], data["transformation"])
+            artifact.metadata = {"content": content, "previous_result": data.get("previous_result")}
+            return artifact
+
         if action == 'transform_file':
-            content = self.transform_text(data["source_path"],data["transformation"]) 
-            return {"content": content, "previous_result" : data["previous_result"] }
+            content = self.transform_file(data["source_path"], data["transformation"])
+            artifact.metadata = {"content": content, "previous_result": data.get("previous_result")}
+            return artifact
 
 """
-=========================================================================================================
-                                Engine: Pipeline Implementaiton
+=========================================================================================================$
+                                Engine: Pipeline Implementation
 =========================================================================================================
 """
 
@@ -188,5 +210,3 @@ class PipelineEngine:
             previous_result = result
 
         return results
-
-
