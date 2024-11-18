@@ -173,7 +173,7 @@ class PipelineEngine:
     def register_plugin(self, name, plugin):
         self.plugins[name] = plugin
 
-    def execute_pipeline(self, pipeline):
+    def execute_pipeline(self, pipeline):# TODO remove validation from execution and make it its own method  in pipelineEngine
         results = []
         for step in pipeline.steps:
             plugin_name = step.plugin
