@@ -6,10 +6,11 @@ import JsonView from '@uiw/react-json-view';
 import Stack from '@mui/material/Stack';
 
 export default function App() {
-  const [responsea, setResponsea] = useState({ "data": "No Route Data yet" });
-  const [responseb, setResponseb] = useState({ "data": "No Route Data yet" });
-  const [responsec, setResponsec] = useState({ "data": "No Route Data yet" });
-  const [responsed, setResponsed] = useState({ "data": "No Route Data yet" });
+  const [responsea, setResponsea] = useState({ "data": "No Data yet" });
+  const [responseb, setResponseb] = useState({ "data": "No Data yet" });
+  const [responsec, setResponsec] = useState({ "data": "No Data yet" });
+  const [responsed, setResponsed] = useState({ "data": "No Data yet" });
+  const [responsee, setResponsee] = useState({ "data": "No Data yet" });
 
   const pipelineSteps = [
     { plugin: "google_drive", action: "upload_file", data: {file_path: "./hello.txt"}},
@@ -50,13 +51,22 @@ export default function App() {
           responseHandler={setResponsec}
         />
         <RequestButton
-          buttonText='Transform Data'
+          buttonText='Upload Transformed Data'
           url="http://localhost:6500/execute_pipeline"
           requestType="POST"
           requestData={{
             steps: [pipelineSteps[3]]
           }}
           responseHandler={setResponsed}
+        />
+        <RequestButton
+          buttonText='Execute All Stages'
+          url="http://localhost:6500/execute_pipeline"
+          requestType="POST"
+          requestData={{
+            steps: pipelineSteps
+          }}
+          responseHandler={setResponsee}
         />
       </Stack>
       <div style={{ padding: "10px" }}>
@@ -68,6 +78,8 @@ export default function App() {
         <JsonView value={responsec} collapsed={false} />
         <h1>Dest Response</h1>
         <JsonView value={responsed} collapsed={false} />
+        <h1>ALL Response</h1>
+        <JsonView value={responsee} collapsed={false} />
       </div>
     </div>
   );

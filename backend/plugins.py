@@ -34,6 +34,7 @@ class PluginInterface:
 
     def execute(self, action, data):
         raise NotImplementedError("Execute method not implemented.")
+
 """
 =========================================================================================================
                                             Decorators
@@ -143,9 +144,11 @@ class GPTTransformPlugin(PluginInterface):
     @validate_action
     def execute(self, action, data):
         if action == 'transform_text':
-            return self.transform_text(data["source"],data["transformation"])
+            content = self.transform_text(data["source"],data["transformation"]) 
+            return {"content": content, "previous_result" : data["previous_result"] }
         if action == 'transform_file':
-            return self.transform_file(data["source_path"],data["transformation"])
+            content = self.transform_text(data["source_path"],data["transformation"]) 
+            return {"content": content, "previous_result" : data["previous_result"] }
 
 """
 =========================================================================================================
@@ -162,10 +165,16 @@ class PipelineEngine:
 
     def execute_pipeline(self, pipeline):
         results = []
+        previous_result = None
         for step in pipeline:
             plugin_name = step.plugin
             action = step.action
-            data= step.data
+            data = step.data
+
+            # If there is a previous result, pass it to the current stage
+            if previous_result is not None:
+                data['previous_result'] = previous_result
+
             plugin = self.plugins.get(plugin_name)
 
             if not plugin:
@@ -175,5 +184,9 @@ class PipelineEngine:
             result = plugin.execute(action, data)
             results.append(result)
 
+            # Store the result for the next stage
+            previous_result = result
+
         return results
+
 
