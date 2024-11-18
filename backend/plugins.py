@@ -19,13 +19,14 @@ class Stage(BaseModel):
     plugin: str
     action: str
     data: object
-    input_data_type: str
-    output_data_type: str
 
 class Pipeline(BaseModel):
     steps: List[Stage]
 
 class PluginInterface:
+    input_data_type: str
+    output_data_type: str
+
     def authenticate(self):
         raise NotImplementedError("Authenticate method not implemented.")
 
@@ -35,8 +36,13 @@ class PluginInterface:
 class InputValidator:
     @staticmethod
     def validate(stage: Stage, previous_result: Artifact):
-        if previous_result and stage.input_data_type != previous_result.data_type:
-            raise ValueError(f"Input data type '{stage.input_data_type}' is not compatible with previous output data type '{previous_result.data_type}'.")
+        # pass
+        try:
+            if previous_result and stage.plugin.input_data_type != previous_result.data_type:
+                raise ValueError(f"Input data type '{stage.plugin.input_data_type}' is not compatible with previous output data type '{previous_result.data_type}'.")
+        except:
+            pass
+ 
 
 def validate_action(func):
     def wrapper(self, action, data=None, previous_result=None):
@@ -48,6 +54,9 @@ def validate_action(func):
     return wrapper
 
 class GoogleDrivePlugin(PluginInterface):
+    input_data_type = "file"
+    output_data_type = "file"
+
     def __init__(self, service_account_file):
         self.service_account_file = service_account_file
         self.creds = None
@@ -82,7 +91,7 @@ class GoogleDrivePlugin(PluginInterface):
         service = build('drive', 'v3', credentials=self.creds)
         artifact = Artifact(
             plugin="GoogleDrivePlugin",
-            data_type="file",
+            data_type=self.output_data_type,
             status="success",
             timestamp=datetime.now(),
             metadata={"action": action}
@@ -106,6 +115,9 @@ class GoogleDrivePlugin(PluginInterface):
             return artifact
 
 class GPTTransformPlugin(PluginInterface):
+    input_data_type = "text"
+    output_data_type = "text"
+
     def __init__(self):
         self.authenticated = False
         self.client = None
@@ -138,7 +150,7 @@ class GPTTransformPlugin(PluginInterface):
     def execute(self, action, data, previous_result=None):
         artifact = Artifact(
             plugin="GPTTransformPlugin",
-            data_type="text",
+            data_type=self.output_data_type,
             status="success",
             timestamp=datetime.now(),
             metadata={"action": action }
@@ -179,7 +191,7 @@ class PipelineEngine:
                 InputValidator.validate(step, results[-1])
 
             result = plugin.execute(action=action, data=data, previous_result=results[-1] if results else None)
-
+k
             results.append(result)
 
         return results

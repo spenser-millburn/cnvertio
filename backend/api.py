@@ -27,7 +27,7 @@ pipeline_engine.register_plugin('gpt_transform', GPTTransformPlugin())
 @app.post("/execute_pipeline")
 def execute_pipeline(pipeline: Pipeline):
     try:
-        results = pipeline_engine.execute_pipeline(pipeline.steps)
+        results = pipeline_engine.execute_pipeline(pipeline)
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e.with_traceback()))
