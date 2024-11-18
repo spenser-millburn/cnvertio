@@ -5,9 +5,10 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from plugins import PipelineEngine, Pipeline, Stage
-from plugins import GoogleDrivePlugin, GPTTransformPlugin
+from src.plugins import GoogleDrivePlugin, GPTTransformPlugin
+from src.pipeline_engine import Pipeline, PipelineEngine
 from typing import List
+
 
 app = FastAPI()
 
@@ -35,3 +36,4 @@ def execute_pipeline(pipeline: Pipeline):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=6500)
+

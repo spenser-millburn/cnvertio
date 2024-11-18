@@ -1,1 +1,0 @@
-[{"./plugins.py": "Modify the plugin classes or functions to include methods or attributes that define their input and output types internally. Remove any existing code that requires the user to provide these types externally."}]

@@ -13,11 +13,11 @@ export default function App() {
   const [responsee, setResponsee] = useState({ "data": "No Data yet" });
 
   const pipelineSteps = [
-    { plugin: "google_drive", action: "upload_file", data: {file_path: "./hello.txt"}},
+    { plugin: "google_drive", action: "upload_file", data: {file_path: ".temp/hello.txt"}},
     { plugin: "google_drive", action: "download_file", data: {"file_id":"15EuDWZaa2H8R24JinXkZENU8bsuNE8zN",  "file_path" : "test_download.txt"}},
     // { plugin: "gpt_transform", action: "transform_text", data: { source: "apples", transformation: " what is this respond in one sentance what it depicts dont mention ascii art  and be detailed" } },
-    { plugin: "gpt_transform", action: "transform_file", data: { source_path: "test_download.txt", transformation: " what is this respond in one sentance what it depicts dont mention ascii art  and be detailed" } },
-    { plugin: "google_drive", action: "upload_file", data: {"file_path" : "test_download.txt"} }
+    { plugin: "gpt_transform", action: "transform_file", data: { source_path: ".temp/test_download.txt", transformation: " what is this respond in one sentance what it depicts dont mention ascii art  and be detailed" } },
+    { plugin: "google_drive", action: "upload_file", data: {"file_path" : ".temp/test_download.txt"} }
   ];
 
   return (

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 from typing import List
 from googleapiclient.discovery import build
@@ -7,55 +8,13 @@ import openai
 import os
 from pydantic import BaseModel
 from datetime import datetime
-
-class Artifact(BaseModel):
-    plugin: str
-    data_type: str
-    status: str
-    timestamp: datetime
-    metadata: dict
-
-class Stage(BaseModel):
-    plugin: str
-    action: str
-    data: object
-
-class Pipeline(BaseModel):
-    steps: List[Stage]
-
-class PluginInterface:
-    input_data_type: str
-    output_data_type: str
-
-    def authenticate(self):
-        raise NotImplementedError("Authenticate method not implemented.")
-
-    def execute(self, action, data, previous_result):
-        raise NotImplementedError("Execute method not implemented.")
-
-class InputValidator:
-    @staticmethod
-    def validate(stage: Stage, previous_result: Artifact):
-        # pass
-        try:
-            if previous_result and stage.plugin.input_data_type != previous_result.data_type:
-                raise ValueError(f"Input data type '{stage.plugin.input_data_type}' is not compatible with previous output data type '{previous_result.data_type}'.")
-        except:
-            pass
- 
-
-def validate_action(func):
-    def wrapper(self, action, data=None, previous_result=None):
-        if not action:
-            raise ValueError("Action not provided!")
-        if action not in self.supported_actions:
-            raise ValueError(f"Action '{action}' not supported.")
-        return func(self, action, data, previous_result)
-    return wrapper
+from src.pipeline_engine import Stage
+from src.plugin_interface import Artifact, PluginInterface, validate_action
 
 class GoogleDrivePlugin(PluginInterface):
-    input_data_type = "file"
-    output_data_type = "file"
+    input_data_type = "text"
+    output_data_type = "text"
+    name = "GoogleDrivePlugin"
 
     def __init__(self, service_account_file):
         self.service_account_file = service_account_file
@@ -90,7 +49,7 @@ class GoogleDrivePlugin(PluginInterface):
     def execute(self, action, data=None, previous_result=None):
         service = build('drive', 'v3', credentials=self.creds)
         artifact = Artifact(
-            plugin="GoogleDrivePlugin",
+            plugin=GoogleDrivePlugin,
             data_type=self.output_data_type,
             status="success",
             timestamp=datetime.now(),
@@ -117,6 +76,7 @@ class GoogleDrivePlugin(PluginInterface):
 class GPTTransformPlugin(PluginInterface):
     input_data_type = "text"
     output_data_type = "text"
+    name = "GPTTransformPlugin" #TODO use __class__.__name__
 
     def __init__(self):
         self.authenticated = False
@@ -149,7 +109,7 @@ class GPTTransformPlugin(PluginInterface):
     @validate_action
     def execute(self, action, data, previous_result=None):
         artifact = Artifact(
-            plugin="GPTTransformPlugin",
+            plugin=GPTTransformPlugin,
             data_type=self.output_data_type,
             status="success",
             timestamp=datetime.now(),
@@ -165,32 +125,3 @@ class GPTTransformPlugin(PluginInterface):
             content = self.transform_text(data["source_path"], data["transformation"])
             artifact.metadata.update({"content": content})
             return artifact
-
-class PipelineEngine:
-    def __init__(self):
-        self.plugins = {}
-
-    def register_plugin(self, name, plugin):
-        self.plugins[name] = plugin
-
-    def execute_pipeline(self, pipeline):# TODO remove validation from execution and make it its own method  in pipelineEngine
-        results = []
-        for step in pipeline.steps:
-            plugin_name = step.plugin
-            action = step.action
-            data = step.data
-
-            plugin = self.plugins.get(plugin_name)
-
-            if not plugin:
-                raise ValueError(f"Plugin '{plugin_name}' not registered.")
-
-            plugin.authenticate()
-
-            if results:
-                InputValidator.validate(step, results[-1])
-
-            result = plugin.execute(action=action, data=data, previous_result=results[-1] if results else None)
-            results.append(result)
-
-        return results
