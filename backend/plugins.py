@@ -5,19 +5,8 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import openai
 import os
-
 from pydantic import BaseModel
 from datetime import datetime
-
-"""
-=========================================================================================================
-                                         Definitions
----------------------------------------------------------------------------------------------------------
-- Pipeline: A container for workflow logic
-- Stage: A discrete unit of work
-- Plugin:
-=========================================================================================================
-"""
 
 class Artifact(BaseModel):
     plugin: str
@@ -30,6 +19,8 @@ class Stage(BaseModel):
     plugin: str
     action: str
     data: object
+    input_data_type: str
+    output_data_type: str
 
 class Pipeline(BaseModel):
     steps: List[Stage]
@@ -38,32 +29,23 @@ class PluginInterface:
     def authenticate(self):
         raise NotImplementedError("Authenticate method not implemented.")
 
-    def execute(self, action, data):
+    def execute(self, action, data, previous_result):
         raise NotImplementedError("Execute method not implemented.")
 
-"""
-=========================================================================================================
-                                             Decorators
-=========================================================================================================
-"""
+class InputValidator:
+    @staticmethod
+    def validate(stage: Stage, previous_result: Artifact):
+        if previous_result and stage.input_data_type != previous_result.data_type:
+            raise ValueError(f"Input data type '{stage.input_data_type}' is not compatible with previous output data type '{previous_result.data_type}'.")
 
 def validate_action(func):
-    def wrapper(self, action, data=None):
+    def wrapper(self, action, data=None, previous_result=None):
         if not action:
             raise ValueError("Action not provided!")
         if action not in self.supported_actions:
             raise ValueError(f"Action '{action}' not supported.")
-        return func(self, action, data)
+        return func(self, action, data, previous_result)
     return wrapper
-
-"""
-=========================================================================================================
-                                             Plugins:
----------------------------------------------------------------------------------------------------------
-- Google Drive
-- GPTTransform
-=========================================================================================================
-"""
 
 class GoogleDrivePlugin(PluginInterface):
     def __init__(self, service_account_file):
@@ -96,7 +78,7 @@ class GoogleDrivePlugin(PluginInterface):
         return f"File downloaded to: {destination}"
 
     @validate_action
-    def execute(self, action, data=None):
+    def execute(self, action, data=None, previous_result=None):
         service = build('drive', 'v3', credentials=self.creds)
         artifact = Artifact(
             plugin="GoogleDrivePlugin",
@@ -153,29 +135,24 @@ class GPTTransformPlugin(PluginInterface):
         return transformed_text + " successfully modified file"
 
     @validate_action
-    def execute(self, action, data):
+    def execute(self, action, data, previous_result=None):
         artifact = Artifact(
             plugin="GPTTransformPlugin",
             data_type="text",
             status="success",
             timestamp=datetime.now(),
-            metadata={"action": action}
+            metadata={"action": action }
         )
 
         if action == 'transform_text':
             content = self.transform_text(data["source"], data["transformation"])
             artifact.metadata.update({"content": content})
             return artifact
+
         if action == 'transform_file':
             content = self.transform_text(data["source_path"], data["transformation"])
             artifact.metadata.update({"content": content})
             return artifact
-
-"""
-=========================================================================================================$
-                                 Engine: Pipeline Implementaiton
-=========================================================================================================
-"""
 
 class PipelineEngine:
     def __init__(self):
@@ -186,11 +163,10 @@ class PipelineEngine:
 
     def execute_pipeline(self, pipeline):
         results = []
-        for step in pipeline:
+        for step in pipeline.steps:
             plugin_name = step.plugin
             action = step.action
             data = step.data
-
 
             plugin = self.plugins.get(plugin_name)
 
@@ -198,7 +174,12 @@ class PipelineEngine:
                 raise ValueError(f"Plugin '{plugin_name}' not registered.")
 
             plugin.authenticate()
-            result = plugin.execute(action, data)
+
+            if results:
+                InputValidator.validate(step, results[-1])
+
+            result = plugin.execute(action=action, data=data, previous_result=results[-1] if results else None)
+
             results.append(result)
 
         return results
