@@ -1,0 +1,41 @@
+{
+  "steps": [
+    {
+      "plugin": "random_image",
+      "action": "download_image",
+      "data": {
+        "url": "https://picsum.photos/id/235/200/300",
+        "destination": "/app/random-image.jpg"
+      }
+    },
+    {
+      "plugin": "image_analysis",
+      "action": "analyze_image",
+      "data": {
+        "image_path": "/app/random-image.jpg"
+      }
+    },
+    {
+      "plugin": "google_sheets",
+      "action": "create_sheet",
+      "data": { "title": "Image Analysis Results" }
+    },
+    {
+      "plugin": "google_sheets",
+      "action": "update_sheet",
+      "data": {
+        "spreadsheet_id": "1aU8-3tHeVeoPqf7e9lUivjsfpWnWmY4aGCr8Z2GHhpY",
+        "range_name": "Sheet1!A1",
+        "values": [["Analysis Result", "this is a coolspreadsheet"]]
+      }
+    },
+    {
+      "plugin": "google_sheets",
+      "action": "read_sheet",
+      "data": {
+        "spreadsheet_id": "1aU8-3tHeVeoPqf7e9lUivjsfpWnWmY4aGCr8Z2GHhpY",
+        "range_name": "Sheet1!A1:B1"
+      }
+    }
+  ]
+}

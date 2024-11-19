@@ -1,86 +1,67 @@
-import React, { useState } from 'react';
-import './App.css';
-import { API_HOST } from './constants';
-import RequestButton from './components/RequestButton';
-import JsonView from '@uiw/react-json-view';
-import Stack from '@mui/material/Stack';
+import React from 'react'; import './App.css'; import { API_HOST } from './constants'; import RequestButton from './components/RequestButton'; import Stack from '@mui/material/Stack'; import Card from '@mui/material/Card'; import CardContent from '@mui/material/CardContent'; import JsonView from '@uiw/react-json-view'; 
 
-export default function App() {
-  const [responsea, setResponsea] = useState({ "data": "No Data yet" });
-  const [responseb, setResponseb] = useState({ "data": "No Data yet" });
-  const [responsec, setResponsec] = useState({ "data": "No Data yet" });
-  const [responsed, setResponsed] = useState({ "data": "No Data yet" });
-  const [responsee, setResponsee] = useState({ "data": "No Data yet" });
+export default function App() { 
+  const pipelineSteps = [ 
+    { plugin: "google_drive", action: "upload_file", data: { file_path: ".temp/hello.txt" } }, 
+    { plugin: "google_drive", action: "download_file", data: { "file_id": "15EuDWZaa2H8R24JinXkZENU8bsuNE8zN", "file_path": "test_download.txt" } }, 
+    { plugin: "gpt_transform", action: "transform_file", data: { source_path: ".temp/test_download.txt", transformation: " what is this respond in one sentance what it depicts dont mention ascii art and be detailed" } }, 
+    { plugin: "google_drive", action: "upload_file", data: { "file_path": ".temp/test_download.txt" } } 
+  ]; 
 
-  const pipelineSteps = [
-    { plugin: "google_drive", action: "upload_file", data: {file_path: ".temp/hello.txt"}},
-    { plugin: "google_drive", action: "download_file", data: {"file_id":"15EuDWZaa2H8R24JinXkZENU8bsuNE8zN",  "file_path" : "test_download.txt"}},
-    // { plugin: "gpt_transform", action: "transform_text", data: { source: "apples", transformation: " what is this respond in one sentance what it depicts dont mention ascii art  and be detailed" } },
-    { plugin: "gpt_transform", action: "transform_file", data: { source_path: ".temp/test_download.txt", transformation: " what is this respond in one sentance what it depicts dont mention ascii art  and be detailed" } },
-    { plugin: "google_drive", action: "upload_file", data: {"file_path" : ".temp/test_download.txt"} }
-  ];
-
-  return (
-    <div className="App">
-      <Stack direction="row" spacing={2}>
-        <RequestButton
-          buttonText='Upload Data'
-          url="http://localhost:6500/execute_pipeline"
-          requestType="POST"
-          requestData={{
-            steps: [pipelineSteps[0]]
-          }}
-          responseHandler={setResponsea}
-        />
-        <RequestButton
-          buttonText='Download Data'
-          url="http://localhost:6500/execute_pipeline"
-          requestType="POST"
-          requestData={{
-            steps: [pipelineSteps[1]]
-          }}
-          responseHandler={setResponseb}
-        />
-        <RequestButton
-          buttonText='Transform Data'
-          url="http://localhost:6500/execute_pipeline"
-          requestType="POST"
-          requestData={{
-            steps: [pipelineSteps[2]]
-          }}
-          responseHandler={setResponsec}
-        />
-        <RequestButton
-          buttonText='Upload Transformed Data'
-          url="http://localhost:6500/execute_pipeline"
-          requestType="POST"
-          requestData={{
-            steps: [pipelineSteps[3]]
-          }}
-          responseHandler={setResponsed}
-        />
-        <RequestButton
-          buttonText='Execute All Stages'
-          url="http://localhost:6500/execute_pipeline"
-          requestType="POST"
-          requestData={{
-            steps: pipelineSteps
-          }}
-          responseHandler={setResponsee}
-        />
-      </Stack>
-      <div style={{ padding: "10px" }}>
-        <h1>Src Upload</h1>
-        <JsonView value={responsea} collapsed={false} />
-        <h1>Src Download</h1>
-        <JsonView value={responseb} collapsed={false} />
-        <h1>Transformer Response</h1>
-        <JsonView value={responsec} collapsed={false} />
-        <h1>Dest Response</h1>
-        <JsonView value={responsed} collapsed={false} />
-        <h1>ALL Response</h1>
-        <JsonView value={responsee} collapsed={false} />
-      </div>
-    </div>
-  );
+  return ( 
+    <div className="App" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}> 
+      <Stack direction="row" spacing={10}> 
+        <Card style={{ width: 400, height: 800, overflowY: 'auto', whiteSpace: 'pre-wrap' }}> 
+          <CardContent> 
+            <RequestButton 
+              buttonText='Upload Data' 
+              url="http://localhost:6500/execute_pipeline" 
+              requestType="POST" 
+              requestData={{ steps: [pipelineSteps[0]] }} 
+            /> 
+          </CardContent> 
+        </Card> 
+        <Card style={{ width: 400, height: 800, overflowY: 'auto', whiteSpace: 'pre-wrap' }}> 
+          <CardContent> 
+            <RequestButton 
+              buttonText='Download Data' 
+              url="http://localhost:6500/execute_pipeline" 
+              requestType="POST" 
+              requestData={{ steps: [pipelineSteps[1]] }} 
+            /> 
+          </CardContent> 
+        </Card> 
+        <Card style={{ width: 400, height: 800, overflowY: 'auto', whiteSpace: 'pre-wrap' }}> 
+          <CardContent> 
+            <RequestButton 
+              buttonText='Transform Data' 
+              url="http://localhost:6500/execute_pipeline" 
+              requestType="POST" 
+              requestData={{ steps: [pipelineSteps[2]] }} 
+            /> 
+          </CardContent> 
+        </Card> 
+        <Card style={{ width: 400, height: 800, overflowY: 'auto', whiteSpace: 'pre-wrap' }}> 
+          <CardContent> 
+            <RequestButton 
+              buttonText='Upload Transformed Data' 
+              url="http://localhost:6500/execute_pipeline" 
+              requestType="POST" 
+              requestData={{ steps: [pipelineSteps[3]] }} 
+            /> 
+          </CardContent> 
+        </Card> 
+        <Card style={{ width: 400, height: 800, overflowY: 'auto', whiteSpace: 'pre-wrap' }}> 
+          <CardContent> 
+            <RequestButton 
+              buttonText='Execute All Stages' 
+              url="http://localhost:6500/execute_pipeline" 
+              requestType="POST" 
+              requestData={{ steps: pipelineSteps }} 
+            /> 
+          </CardContent> 
+        </Card> 
+      </Stack> 
+    </div> 
+  ); 
 }

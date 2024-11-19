@@ -1,15 +1,17 @@
+import React, { useState } from 'react';
 import { Button } from '@mui/material';
-import React from 'react';
+import JsonView from '@uiw/react-json-view';
 
 interface RequestButtonProps {
   buttonText: string,
   url: string,
   requestType: string,
-  requestData: object,
-  responseHandler: (data: any) => void
+  requestData: object
 }
 
-const RequestButton: React.FC<RequestButtonProps> = ({buttonText, url, requestType, requestData, responseHandler }) => {
+const RequestButton: React.FC<RequestButtonProps> = ({ buttonText, url, requestType, requestData }) => {
+  const [response, setResponse] = useState({ "data": "No Data yet" });
+
   const handleClick = () => {
     fetch(url, {
       method: requestType,
@@ -19,20 +21,23 @@ const RequestButton: React.FC<RequestButtonProps> = ({buttonText, url, requestTy
       },
       body: JSON.stringify(requestData)
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      responseHandler(data);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        setResponse(data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
   };
 
   return (
-    <Button variant="outlined" color="primary" onClick={handleClick}>
-      {buttonText}
-    </Button>
+    <div>
+      <Button variant="outlined" color="primary" onClick={handleClick}>
+        {buttonText}
+      </Button>
+      <JsonView value={response} collapsed={false} />
+    </div>
   );
 };
 
