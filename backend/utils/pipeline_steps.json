@@ -40,8 +40,7 @@
     {
       "plugin": "google_drive",
       "action": "list_files",
-      "data": {
-      }
+      "data": {}
     },
     {
       "plugin": "google_drive",
@@ -49,6 +48,15 @@
       "data": {
         "file_id": "1aU8-3tHeVeoPqf7e9lUivjsfpWnWmY4aGCr8Z2GHhpY",
         "file_path": "./output.csv"
+      }
+    },
+    {
+      "plugin": "gmail",
+      "action": "send_email",
+      "data": {
+        "to": "aereadnos@live.com",
+        "subject": "First Email From pipeline",
+        "body": "This is a test email, success."
       }
     }
   ]

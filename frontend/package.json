@@ -19,6 +19,7 @@
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
     "@uiw/react-json-view": "^2.0.0-alpha.8",
+    "@xyflow/react": "^12.3.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",

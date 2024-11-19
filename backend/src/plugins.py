@@ -163,6 +163,68 @@ class GoogleSheetsPlugin(PluginInterface):
             artifact.metadata.update({"updated_cells": updated_cells})
             return artifact
 
+class GmailPlugin(PluginInterface):
+    input_data_type = "text"
+    output_data_type = "text"
+    name = "GmailPlugin"
+
+    def __init__(self, service_account_file):
+        self.service_account_file = service_account_file
+        self.creds = None
+        self.supported_actions = ["send_email", "read_email"]
+
+    def authenticate(self):
+        if not self.creds:
+            self.creds = Credentials.from_service_account_file(
+                self.service_account_file,
+                scopes=['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.readonly'],
+                subject="conductor-dev@conductor-441120.iam.gserviceaccount.com"
+            )
+
+    def send_email(self, to, subject, body):
+        service = build('gmail', 'v1', credentials=self.creds)
+        message = {
+            'raw': base64.urlsafe_b64encode(
+                f"To: {to}\r\nSubject: {subject}\r\n\r\n{body}".encode("utf-8")
+            ).decode("utf-8")
+        }
+        sent_message = service.users().messages().send(userId="me", body=message).execute()
+        return sent_message.get('id')
+
+    def read_email(self, query):
+        service = build('gmail', 'v1', credentials=self.creds)
+        results = service.users().messages().list(userId='me', q=query).execute()
+        messages = results.get('messages', [])
+        email_data = []
+        for message in messages:
+            msg = service.users().messages().get(userId='me', id=message['id']).execute()
+            email_data.append(msg)
+        return email_data
+
+    @validate_action
+    def execute(self, action, data, previous_result=None):
+        artifact = Artifact(
+            plugin=GmailPlugin,
+            data_type=self.output_data_type,
+            status="success",
+            timestamp=datetime.now(),
+            metadata={"action": action}
+        )
+
+        if action == 'send_email':
+            to = data["to"]
+            subject = data["subject"]
+            body = data["body"]
+            email_id = self.send_email(to, subject, body)
+            artifact.metadata.update({"email_id": email_id, "to": to, "subject": subject})
+            return artifact
+
+        elif action == 'read_email':
+            query = data["query"]
+            emails = self.read_email(query)
+            artifact.metadata.update({"emails": emails})
+            return artifact
+
 class GPTTransformPlugin(PluginInterface):
     input_data_type = "text"
     output_data_type = "text"
