@@ -13,6 +13,16 @@ from src.pipeline_engine import Stage
 from src.plugin_interface import Artifact, PluginInterface, validate_action
 
 class GoogleDrivePlugin(PluginInterface):
+    """GoogleDrivePlugin is responsible for interacting with Google Drive to perform actions such as uploading, downloading, and listing files.
+
+    Attributes:
+        input_data_type (str): The type of input data the plugin accepts.
+        output_data_type (str): The type of output data the plugin produces.
+        name (str): The name of the plugin.
+        service_account_file (str): Path to the service account JSON file.
+        creds (Credentials): Google API credentials.
+        supported_actions (List[str]): List of actions supported by the plugin.
+    """
     input_data_type = "text"
     output_data_type = "text"
     name = "GoogleDrivePlugin"
@@ -108,6 +118,16 @@ class GoogleDrivePlugin(PluginInterface):
             return artifact
 
 class GoogleSheetsPlugin(PluginInterface):
+    """GoogleSheetsPlugin is responsible for interacting with Google Sheets to perform actions such as creating, reading, and updating sheets.
+
+    Attributes:
+        input_data_type (str): The type of input data the plugin accepts.
+        output_data_type (str): The type of output data the plugin produces.
+        name (str): The name of the plugin.
+        service_account_file (str): Path to the service account JSON file.
+        creds (Credentials): Google API credentials.
+        supported_actions (List[str]): List of actions supported by the plugin.
+    """
     input_data_type = "text"
     output_data_type = "text"
     name = "GoogleSheetsPlugin"
@@ -224,6 +244,16 @@ class GoogleSheetsPlugin(PluginInterface):
             return artifact
 
 class GPTTransformPlugin(PluginInterface):
+    """GPTTransformPlugin is responsible for transforming text using GPT models.
+
+    Attributes:
+        input_data_type (str): The type of input data the plugin accepts.
+        output_data_type (str): The type of output data the plugin produces.
+        name (str): The name of the plugin.
+        authenticated (bool): Indicates if the plugin is authenticated.
+        client (OpenAI): The OpenAI client for interacting with GPT models.
+        supported_actions (List[str]): List of actions supported by the plugin.
+    """
     input_data_type = "text"
     output_data_type = "text"
     name = "GPTTransformPlugin" #TODO use __class__.__name__
@@ -305,6 +335,16 @@ class GPTTransformPlugin(PluginInterface):
             return artifact
 
 class ImageAnalysisPlugin(PluginInterface):
+    """ImageAnalysisPlugin is responsible for analyzing images and providing descriptions.
+
+    Attributes:
+        input_data_type (str): The type of input data the plugin accepts.
+        output_data_type (str): The type of output data the plugin produces.
+        name (str): The name of the plugin.
+        authenticated (bool): Indicates if the plugin is authenticated.
+        client (OpenAI): The OpenAI client for interacting with GPT models.
+        supported_actions (List[str]): List of actions supported by the plugin.
+    """
     input_data_type = "image"
     output_data_type = "text"
     name = "ImageAnalysisPlugin"
@@ -381,6 +421,14 @@ class ImageAnalysisPlugin(PluginInterface):
             return artifact
 
 class RandomImageGeneratorPlugin(PluginInterface):
+    """RandomImageGeneratorPlugin is responsible for downloading images from URLs.
+
+    Attributes:
+        input_data_type (str): The type of input data the plugin accepts.
+        output_data_type (str): The type of output data the plugin produces.
+        name (str): The name of the plugin.
+        supported_actions (List[str]): List of actions supported by the plugin.
+    """
     input_data_type = "text"
     output_data_type = "image"
     name = "ImageDownloadPlugin"
