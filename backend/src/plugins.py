@@ -13,32 +13,16 @@ from src.pipeline_engine import Stage
 from src.plugin_interface import Artifact, PluginInterface, validate_action
 
 class GoogleDrivePlugin(PluginInterface):
-    """GoogleDrivePlugin is responsible for interacting with Google Drive to perform actions such as uploading, downloading, and listing files.
-
-    Attributes:
-        input_data_type (str): The type of input data the plugin accepts.
-        output_data_type (str): The type of output data the plugin produces.
-        name (str): The name of the plugin.
-        service_account_file (str): Path to the service account JSON file.
-        creds (Credentials): Google API credentials.
-        supported_actions (List[str]): List of actions supported by the plugin.
-    """
     input_data_type = "text"
     output_data_type = "text"
     name = "GoogleDrivePlugin"
 
     def __init__(self, service_account_file):
-        """Initializes the GoogleDrivePlugin with a service account file.
-
-        Args:
-            service_account_file (str): Path to the service account JSON file.
-        """
         self.service_account_file = service_account_file
         self.creds = None
         self.supported_actions = ["upload_file", "download_file", "list_files"]
 
     def authenticate(self):
-        """Authenticates the plugin using the service account file."""
         if not self.creds:
             self.creds = Credentials.from_service_account_file(
                 self.service_account_file,
@@ -46,14 +30,6 @@ class GoogleDrivePlugin(PluginInterface):
             )
 
     def upload_file(self, file_name):
-        """Uploads a file to Google Drive.
-
-        Args:
-            file_name (str): The name of the file to upload.
-
-        Returns:
-            str: The ID of the uploaded file.
-        """
         service = build('drive', 'v3', credentials=self.creds)
         file_metadata = {'name': file_name}
         media = MediaFileUpload(file_name, resumable=True)
@@ -61,15 +37,6 @@ class GoogleDrivePlugin(PluginInterface):
         return file.get('id')
 
     def download_file(self, file_id, destination):
-        """Downloads a file from Google Drive.
-
-        Args:
-            file_id (str): The ID of the file to download.
-            destination (str): The destination path to save the downloaded file.
-
-        Returns:
-            str: A message indicating the file download location.
-        """
         service = build('drive', 'v3', credentials=self.creds)
         request = service.files().get_media(fileId=file_id)
         with open(destination, 'wb') as file:
@@ -81,16 +48,6 @@ class GoogleDrivePlugin(PluginInterface):
 
     @validate_action
     def execute(self, action, data=None, previous_result=None):
-        """Executes a specified action with the provided data.
-
-        Args:
-            action (str): The action to perform.
-            data (dict, optional): The data required for the action.
-            previous_result (Any, optional): The result of a previous action.
-
-        Returns:
-            Artifact: The result of the action execution.
-        """
         service = build('drive', 'v3', credentials=self.creds)
         artifact = Artifact(
             plugin=GoogleDrivePlugin,
@@ -118,26 +75,11 @@ class GoogleDrivePlugin(PluginInterface):
             return artifact
 
 class GoogleSheetsPlugin(PluginInterface):
-    """GoogleSheetsPlugin is responsible for interacting with Google Sheets to perform actions such as creating, reading, and updating sheets.
-
-    Attributes:
-        input_data_type (str): The type of input data the plugin accepts.
-        output_data_type (str): The type of output data the plugin produces.
-        name (str): The name of the plugin.
-        service_account_file (str): Path to the service account JSON file.
-        creds (Credentials): Google API credentials.
-        supported_actions (List[str]): List of actions supported by the plugin.
-    """
     input_data_type = "text"
     output_data_type = "text"
     name = "GoogleSheetsPlugin"
 
     def __init__(self, service_account_file):
-        """Initializes the GoogleSheetsPlugin with a service account file.
-
-        Args:
-            service_account_file (str): Path to the service account JSON file.
-        """
         self.service_account_file = service_account_file
         self.creds = None
         self.supported_actions = ["create_sheet", "read_sheet", "update_sheet"]
@@ -150,14 +92,6 @@ class GoogleSheetsPlugin(PluginInterface):
             )
 
     def create_sheet(self, title):
-        """Creates a new Google Sheet.
-
-        Args:
-            title (str): The title of the new sheet.
-
-        Returns:
-            str: The ID of the created spreadsheet.
-        """
         service = build('sheets', 'v4', credentials=self.creds)
         spreadsheet = {
             'properties': {
@@ -168,31 +102,12 @@ class GoogleSheetsPlugin(PluginInterface):
         return spreadsheet.get('spreadsheetId')
 
     def read_sheet(self, spreadsheet_id, range_name):
-        """Reads data from a Google Sheet.
-
-        Args:
-            spreadsheet_id (str): The ID of the spreadsheet.
-            range_name (str): The range of cells to read.
-
-        Returns:
-            list: The values read from the sheet.
-        """
         service = build('sheets', 'v4', credentials=self.creds)
         result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
         values = result.get('values', [])
         return values
 
     def update_sheet(self, spreadsheet_id, range_name, values):
-        """Updates a Google Sheet with new values.
-
-        Args:
-            spreadsheet_id (str): The ID of the spreadsheet.
-            range_name (str): The range of cells to update.
-            values (list): The values to update in the sheet.
-
-        Returns:
-            int: The number of cells updated.
-        """
         service = build('sheets', 'v4', credentials=self.creds)
         body = {
             'values': values
@@ -204,16 +119,6 @@ class GoogleSheetsPlugin(PluginInterface):
 
     @validate_action
     def execute(self, action, data, previous_result=None):
-        """Executes a specified action with the provided data.
-
-        Args:
-            action (str): The action to perform.
-            data (dict): The data required for the action.
-            previous_result (Any, optional): The result of a previous action.
-
-        Returns:
-            Artifact: The result of the action execution.
-        """
         artifact = Artifact(
             plugin=GoogleSheetsPlugin,
             data_type=self.output_data_type,
@@ -244,19 +149,9 @@ class GoogleSheetsPlugin(PluginInterface):
             return artifact
 
 class GPTTransformPlugin(PluginInterface):
-    """GPTTransformPlugin is responsible for transforming text using GPT models.
-
-    Attributes:
-        input_data_type (str): The type of input data the plugin accepts.
-        output_data_type (str): The type of output data the plugin produces.
-        name (str): The name of the plugin.
-        authenticated (bool): Indicates if the plugin is authenticated.
-        client (OpenAI): The OpenAI client for interacting with GPT models.
-        supported_actions (List[str]): List of actions supported by the plugin.
-    """
     input_data_type = "text"
     output_data_type = "text"
-    name = "GPTTransformPlugin" #TODO use __class__.__name__
+    name = "GPTTransformPlugin"
 
     def __init__(self):
         self.authenticated = False
@@ -265,19 +160,10 @@ class GPTTransformPlugin(PluginInterface):
 
     def authenticate(self):
         if not self.authenticated:
-            self.client = openai.OpenAI()  # TODO add handling here
+            self.client = openai.OpenAI()
             self.authenticated = True
 
     def transform_text(self, source_text, transformation):
-        """Transforms text using a specified transformation.
-
-        Args:
-            source_text (str): The text to transform.
-            transformation (str): The transformation to apply.
-
-        Returns:
-            str: The transformed text.
-        """
         response = self.client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
@@ -289,15 +175,6 @@ class GPTTransformPlugin(PluginInterface):
         return transformed_text
 
     def transform_file(self, source_file_path, transformation):
-        """Transforms the content of a file using a specified transformation.
-
-        Args:
-            source_file_path (str): The path to the file to transform.
-            transformation (str): The transformation to apply.
-
-        Returns:
-            str: A message indicating the file was successfully modified.
-        """
         with open(source_file_path, "r+") as file:
             source_text = file.read()
             transformed_text = self.transform_text(source_text, transformation)
@@ -306,16 +183,6 @@ class GPTTransformPlugin(PluginInterface):
 
     @validate_action
     def execute(self, action, data, previous_result=None):
-        """Executes a specified action with the provided data.
-
-        Args:
-            action (str): The action to perform.
-            data (dict): The data required for the action.
-            previous_result (Any, optional): The result of a previous action.
-
-        Returns:
-            Artifact: The result of the action execution.
-        """
         artifact = Artifact(
             plugin=GPTTransformPlugin,
             data_type=self.output_data_type,
@@ -335,16 +202,6 @@ class GPTTransformPlugin(PluginInterface):
             return artifact
 
 class ImageAnalysisPlugin(PluginInterface):
-    """ImageAnalysisPlugin is responsible for analyzing images and providing descriptions.
-
-    Attributes:
-        input_data_type (str): The type of input data the plugin accepts.
-        output_data_type (str): The type of output data the plugin produces.
-        name (str): The name of the plugin.
-        authenticated (bool): Indicates if the plugin is authenticated.
-        client (OpenAI): The OpenAI client for interacting with GPT models.
-        supported_actions (List[str]): List of actions supported by the plugin.
-    """
     input_data_type = "image"
     output_data_type = "text"
     name = "ImageAnalysisPlugin"
@@ -355,31 +212,15 @@ class ImageAnalysisPlugin(PluginInterface):
         self.supported_actions = ["analyze_image"]
 
     def encode_image(self, image_path):
-        """Encodes an image to a base64 string.
-
-        Args:
-            image_path (str): The path to the image file.
-
-        Returns:
-            str: The base64 encoded string of the image.
-        """
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
     def authenticate(self):
         if not self.authenticated:
-            self.client = openai.OpenAI()  # TODO add handling here
+            self.client = openai.OpenAI()
             self.authenticated = True
 
     def analyze_image(self, image_path):
-        """Analyzes an image and returns a description.
-
-        Args:
-            image_path (str): The path to the image file.
-
-        Returns:
-            str: The description of the image content.
-        """
         base64_image = self.encode_image(image_path)
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
@@ -397,16 +238,6 @@ class ImageAnalysisPlugin(PluginInterface):
 
     @validate_action
     def execute(self, action, data, previous_result=None):
-        """Executes a specified action with the provided data.
-
-        Args:
-            action (str): The action to perform.
-            data (dict): The data required for the action.
-            previous_result (Any, optional): The result of a previous action.
-
-        Returns:
-            Artifact: The result of the action execution.
-        """
         artifact = Artifact(
             plugin=ImageAnalysisPlugin,
             data_type=self.output_data_type,
@@ -421,14 +252,6 @@ class ImageAnalysisPlugin(PluginInterface):
             return artifact
 
 class RandomImageGeneratorPlugin(PluginInterface):
-    """RandomImageGeneratorPlugin is responsible for downloading images from URLs.
-
-    Attributes:
-        input_data_type (str): The type of input data the plugin accepts.
-        output_data_type (str): The type of output data the plugin produces.
-        name (str): The name of the plugin.
-        supported_actions (List[str]): List of actions supported by the plugin.
-    """
     input_data_type = "text"
     output_data_type = "image"
     name = "ImageDownloadPlugin"
@@ -437,15 +260,6 @@ class RandomImageGeneratorPlugin(PluginInterface):
         self.supported_actions = ["download_image"]
 
     def download_image(self, url, destination):
-        """Downloads an image from a URL to a specified destination.
-
-        Args:
-            url (str): The URL of the image to download.
-            destination (str): The destination path to save the downloaded image.
-
-        Returns:
-            str: A message indicating the image download location.
-        """
         os.system(f"wget {url} -O {destination}")
         return f"Image downloaded to: {destination}"
 
@@ -454,16 +268,6 @@ class RandomImageGeneratorPlugin(PluginInterface):
 
     @validate_action
     def execute(self, action, data, previous_result=None):
-        """Executes a specified action with the provided data.
-
-        Args:
-            action (str): The action to perform.
-            data (dict): The data required for the action.
-            previous_result (Any, optional): The result of a previous action.
-
-        Returns:
-            Artifact: The result of the action execution.
-        """
         artifact = Artifact(
             plugin=RandomImageGeneratorPlugin,
             data_type=self.output_data_type,
