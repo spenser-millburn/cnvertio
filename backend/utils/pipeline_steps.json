@@ -18,7 +18,7 @@
     {
       "plugin": "google_sheets",
       "action": "create_sheet",
-      "data": { "title": "Image Analysis Results" }
+      "data": { "title": "Image Analysis Results245" }
     },
     {
       "plugin": "google_sheets",
@@ -35,6 +35,20 @@
       "data": {
         "spreadsheet_id": "1aU8-3tHeVeoPqf7e9lUivjsfpWnWmY4aGCr8Z2GHhpY",
         "range_name": "Sheet1!A1:B1"
+      }
+    },
+    {
+      "plugin": "google_drive",
+      "action": "list_files",
+      "data": {
+      }
+    },
+    {
+      "plugin": "google_drive",
+      "action": "download_sheet",
+      "data": {
+        "file_id": "1aU8-3tHeVeoPqf7e9lUivjsfpWnWmY4aGCr8Z2GHhpY",
+        "file_path": "./output.csv"
       }
     }
   ]

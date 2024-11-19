@@ -20,7 +20,7 @@ class GoogleDrivePlugin(PluginInterface):
     def __init__(self, service_account_file):
         self.service_account_file = service_account_file
         self.creds = None
-        self.supported_actions = ["upload_file", "download_file", "list_files"]
+        self.supported_actions = ["upload_file", "download_file", "list_files", "download_sheet"]
 
     def authenticate(self):
         if not self.creds:
@@ -45,6 +45,16 @@ class GoogleDrivePlugin(PluginInterface):
             while not done:
                 status, done = downloader.next_chunk()
         return f"File downloaded to: {destination}"
+
+    def download_sheet(self, file_id, destination, mime_type='text/csv'):
+        service = build('drive', 'v3', credentials=self.creds)
+        request = service.files().export_media(fileId=file_id, mimeType=mime_type)
+        with open(destination, 'wb') as file:
+            downloader = MediaIoBaseDownload(file, request)
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+        return f"Sheet downloaded to: {destination}"
 
     @validate_action
     def execute(self, action, data=None, previous_result=None):
@@ -72,6 +82,11 @@ class GoogleDrivePlugin(PluginInterface):
             results = service.files().list(pageSize=10, fields="files(id, name)").execute()
             items = results.get('files', [])
             artifact.metadata.update({"files": items})
+            return artifact
+
+        elif action == 'download_sheet':
+            result = self.download_sheet(file_id=data["file_id"], destination=data["file_path"])
+            artifact.metadata.update({"result": result})
             return artifact
 
 class GoogleSheetsPlugin(PluginInterface):
